@@ -4,9 +4,11 @@ Priorities: P0 blocks the next milestone; P1 is MVP-critical; P2 is an enhanceme
 
 ## P0 — feasibility and foundations
 
-- [ ] Free/attach >=80 GiB storage; authenticate Hugging Face; accept LTX-2.5 terms.
-- [ ] Benchmark LTX-2.5 Fast on M5/32 GB with recorded memory and swap telemetry.
-- [ ] Decide native LTX versus ComfyUI LTX adapter from evidence.
+- [ ] Free/attach >=45 GiB storage plus output headroom; authenticate Hugging Face;
+  accept LTX-2.5 terms.
+- [ ] Benchmark official LTX-2.5 distilled INT8-ConvRot ComfyUI workflow on M5/32 GB
+  with recorded memory, swap, thermals, and wall time.
+- [ ] Validate text-encoder unload before denoising and VAE unload after output.
 - [ ] Capture and pin a golden FLUX-family image workflow on Apple Silicon.
 - [ ] Add workflow binding manifests and `/object_info` compatibility validation.
 - [ ] Add SQLite project/job/artifact schema and migrations.

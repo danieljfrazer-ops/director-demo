@@ -13,14 +13,17 @@ MPS-capable runtime before treating ComfyUI as the production LTX backend.
 
 Sequential image then video loops avoid simultaneous model residency, but unified
 memory is shared by macOS, the UI, Python, model weights, latent tensors, and media
-buffers. LTX-2.5's official Fast pack is about 66 GiB on disk; the bf16 transformer
-alone cannot be fully resident in 32 GB. Apple Silicon therefore needs disk-backed
-streaming/offload, low-resolution first passes, aggressive process teardown, and
-measured free-memory admission—not merely `del model` or a ComfyUI queue boundary.
+buffers. The BF16 LTX-2.5 pack is about 66 GiB and is the wrong profile for this
+machine. The selected ComfyUI-only distilled INT8-ConvRot transformer and encoder
+reduce the working pack to about 37 GiB on disk, but together still exceed available
+runtime memory. Apple Silicon therefore needs sequential encoder/model residency,
+low-resolution first passes, aggressive unloading, and measured free-memory
+admission—not merely `del model` or a ComfyUI queue boundary.
 
 **Change:** a resource governor owns the one heavy job slot, checks free RAM/disk,
 launches generation in a disposable worker process, and confirms process exit before
-the next engine starts. Begin at 512p/short duration, then upscale accepted takes.
+the next engine starts. The Gemma encoder must be offloaded before denoising. Begin
+at 512p/short duration, then spatially upscale accepted takes.
 
 ### 2. “Local LLM” conflicts with a cloud-only director
 
@@ -137,8 +140,9 @@ native file dialogs, keychain access, updates, and process lifecycle justify it.
 
 ## LTX-2.5 decision on the target Mac
 
-LTX-2.5 Fast remains the preferred video engine, but it is a gated 22B bf16 model.
-The target Mac must use MPS streaming/offload and should expect slow generations.
-The first spike must benchmark 3-5 second 512p video-only and audio-video cases while
-recording peak RAM, swap, wall time, and output validity. A 720p/1080p promise is
-accepted-output/upscale territory until measurements prove native generation viable.
+LTX-2.5 Fast Distilled INT8-ConvRot remains the fixed video engine. The quantized
+files are ComfyUI-only; the native LTX Python pipeline expects BF16 and is not the
+primary path for this hardware profile. The first spike must benchmark 3-5 second
+512p video-only and audio-video cases while recording peak RAM, swap, wall time, and
+output validity. A 720p/1080p promise is accepted-output/upscale territory until
+measurements prove native generation viable.

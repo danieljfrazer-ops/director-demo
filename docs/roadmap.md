@@ -4,15 +4,15 @@ Each milestone adds one independently testable capability and has an exit criter
 
 ## Stage 0 — Feasibility spikes
 
-1. Free at least 80 GiB disk, authenticate Hugging Face, accept the LTX-2.5 license,
-   and download the Fast pack with the supplied resumable installer.
-2. Benchmark official LTX MPS generation at small resolution/duration, video-only
-   first and synchronized audio second. Record RAM, swap, time, and failures.
-3. Run one pinned ComfyUI image workflow and one LTX workflow if compatible; compare
-   reliability with native LTX execution.
+1. Free at least 45 GiB disk (more for outputs), authenticate Hugging Face, accept
+   the LTX-2.5 license, and download the ComfyUI distilled INT8-ConvRot pack.
+2. Install current ComfyUI and run its native LTX-2.5 I2V template at small
+   resolution/duration, video-only first and synchronized audio second. Record RAM,
+   swap, time, thermals, and failures.
+3. Run one pinned ComfyUI image workflow and confirm it fully unloads before LTX.
 
 **Exit:** one valid anchor image and one 3-5 second conditioned clip can be reproduced
-from recorded inputs on the target Mac without exhausting disk or memory.
+from recorded inputs on the 32 GB M5 Mac without exhausting disk or memory.
 
 ## PoC 1 — Text to inspectable plan
 

@@ -66,13 +66,18 @@ The model installer intentionally refuses to fill the disk or start without
 Hugging Face authentication:
 
 ```bash
-python scripts/download_ltx25.py --target models/ltx-2.5
+python scripts/download_ltx25.py --target /path/to/ComfyUI/models
 ```
+
+The installer selects the official LTX-2.5 distilled INT8-ConvRot transformer
+and matching INT8-ConvRot Gemma encoder. It deliberately does not download the
+BF16 transformer/encoder or optional prompt-enhancer model.
 
 ## Current status
 
 This is the initial technical baseline, not yet a usable end-to-end UI. See the
 [architecture review](docs/architecture.md), [roadmap](docs/roadmap.md), and
-[backlog](docs/backlog.md) for the agreed build sequence.
+[backlog](docs/backlog.md) for the agreed build sequence. The fixed target-machine
+contract is documented in [the M5/32 GB runtime profile](docs/m5-32gb-profile.md).
 
 This repository is private and currently unlicensed; all rights are reserved.
