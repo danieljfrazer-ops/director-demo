@@ -1,0 +1,21 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Generated media and large model weights never belong in Git.
+data/
+models/
+outputs/
+*.safetensors
+*.ckpt
+*.gguf
