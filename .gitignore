@@ -1,5 +1,9 @@
 .DS_Store
 .env
+.env.*
+!.env.example
+.envrc
+.dev.vars*
 .venv/
 __pycache__/
 *.py[cod]
@@ -11,11 +15,47 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+node_modules/
+.next/
+.wrangler/
+*.tsbuildinfo
+.director-demo.pid
+
+# Local archive exports are generated from ignored run history. The curated
+# public showcase lives under web/public/showcase instead.
+web/public/runs.json
+web/public/editorial.json
 
 # Generated media and large model weights never belong in Git.
 data/
 models/
 outputs/
+.runtime/
 *.safetensors
 *.ckpt
 *.gguf
+
+# Local diagnostics and credentials are never publication artifacts.
+*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+
+# Media is private by default. The recorded showcase is the sole explicit exception.
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.m4v
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.flac
+*.ogg
+!web/public/showcase/media/*.mp4

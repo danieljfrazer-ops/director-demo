@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
@@ -24,12 +25,36 @@ class GeneratedFile:
     kind: str
     node_id: str
 
+    def __post_init__(self) -> None:
+        filename = Path(self.filename)
+        subfolder = Path(self.subfolder)
+        unsafe_filename = (
+            filename.is_absolute()
+            or filename.name != self.filename
+            or self.filename in {"", ".", ".."}
+            or "\\" in self.filename
+            or "\x00" in self.filename
+        )
+        if unsafe_filename:
+            raise ComfyUIError(f"Unsafe generated filename: {self.filename!r}")
+        if subfolder.is_absolute() or ".." in subfolder.parts or "\\" in self.subfolder:
+            raise ComfyUIError(f"Unsafe generated subfolder: {self.subfolder!r}")
+        if self.kind not in {"input", "output", "temp"}:
+            raise ComfyUIError(f"Unexpected generated file type: {self.kind!r}")
+
 
 class ComfyUIClient:
     """Small asynchronous client for the local ComfyUI queue and WebSocket API."""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8188", timeout: float = 30.0):
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:8188",
+        timeout: float = 30.0,
+        *,
+        allow_remote: bool = False,
+    ):
         self.base_url = base_url.rstrip("/")
+        self._validate_base_url(allow_remote=allow_remote)
         self.client_id = str(uuid4())
         self._http = httpx.AsyncClient(base_url=self.base_url, timeout=timeout)
 
@@ -46,6 +71,21 @@ class ComfyUIClient:
         response = await self._http.get("/system_stats")
         response.raise_for_status()
         return cast(dict[str, Any], response.json())
+
+    async def interrupt(self) -> None:
+        """Request cancellation of the currently executing ComfyUI prompt."""
+
+        response = await self._http.post("/interrupt")
+        response.raise_for_status()
+
+    async def free(self, *, unload_models: bool = True, free_memory: bool = True) -> None:
+        """Ask a trusted ComfyUI process to release models and cached memory."""
+
+        response = await self._http.post(
+            "/free",
+            json={"unload_models": unload_models, "free_memory": free_memory},
+        )
+        response.raise_for_status()
 
     async def upload_image(self, path: Path, *, overwrite: bool = False) -> dict[str, Any]:
         with path.open("rb") as image:
@@ -116,11 +156,34 @@ class ComfyUIClient:
                 "type": generated.kind,
             }
         )
-        response = await self._http.get(f"/view?{query}")
-        response.raise_for_status()
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(response.content)
+        async with self._http.stream("GET", f"/view?{query}") as response:
+            response.raise_for_status()
+            with destination.open("wb") as output:
+                async for chunk in response.aiter_bytes():
+                    output.write(chunk)
         return destination
+
+    def _validate_base_url(self, *, allow_remote: bool) -> None:
+        parsed = urlparse(self.base_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ComfyUIError(f"Invalid ComfyUI URL: {self.base_url!r}")
+        if parsed.username or parsed.password or parsed.path not in {"", "/"}:
+            raise ComfyUIError("ComfyUI URL must contain only scheme, host, and port")
+        if allow_remote:
+            return
+        hostname = parsed.hostname
+        is_loopback = hostname == "localhost"
+        if not is_loopback:
+            try:
+                is_loopback = ipaddress.ip_address(hostname).is_loopback
+            except ValueError:
+                is_loopback = False
+        if not is_loopback:
+            raise ComfyUIError(
+                "Remote ComfyUI URLs are disabled by default; bind ComfyUI to loopback "
+                "or opt in with allow_remote=True after reviewing the trust boundary"
+            )
 
     def _websocket_url(self) -> str:
         parsed = urlparse(self.base_url)

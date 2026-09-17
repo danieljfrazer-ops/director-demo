@@ -1,148 +1,225 @@
-# Architecture review and refined design
+# Architecture: evidence before infrastructure
 
-## Executive decision
+## Status and executive decision
 
-Keep Python, FFmpeg, LTX-2.5 Fast Distilled, and optional ComfyUI integration—but
-replace the linear script with a durable project model, a resumable state machine,
-and pluggable generation adapters. On this Mac, validate LTX through its official
-MPS-capable runtime before treating ComfyUI as the production LTX backend.
+This is both a target design and a record of the working vertical slice. The repository
+now has a typed director/shot-plan path, an unwired ComfyUI adapter, a simple FFmpeg
+stitcher, a native LTX-2.5 renderer, durable run provenance, and a read-only local run
+archive. Multiple image-conditioned takes and a three-clip film have rendered locally.
+User review confirms that the measured 1024 x 576 profile materially improves facial
+quality; the chained outro also proves that unapproved boundary defects and uncontrolled
+motion propagate into a cut.
 
-## Red-team findings
+Keep Python, FFmpeg, typed project data, and LTX-2.5 Fast Distilled as the desired
+video model. Make the **video runtime provisional**:
 
-### 1. The memory assumption is necessary but insufficient
+- The stock ComfyUI INT8-ConvRot route is rejected on the M5 because its required
+  integer matrix operation is absent from MPS.
+- The working primary local path is Lightricks' official LTX-2 Python pipeline using
+  strict LTX-2.5 BF16 weights, fused MPS attention, and disk streaming. It remains
+  evidence-bound and replaceable rather than permanent.
+- The first MVP is local-only; there is no cloud LTX or planning fallback. A failed local
+  capability blocks the relevant workflow and produces evidence for a later decision.
+- ComfyUI remains a possible image adapter and future video adapter, not the domain
+  model or an assumed production dependency.
 
-Sequential image then video loops avoid simultaneous model residency, but unified
-memory is shared by macOS, the UI, Python, model weights, latent tensors, and media
-buffers. The BF16 LTX-2.5 pack is about 66 GiB and is the wrong profile for this
-machine. The selected ComfyUI-only distilled INT8-ConvRot transformer and encoder
-reduce the working pack to about 37 GiB on disk, but together still exceed available
-runtime memory. Apple Silicon therefore needs sequential encoder/model residency,
-low-resolution first passes, aggressive unloading, and measured free-memory
-admission—not merely `del model` or a ComfyUI queue boundary.
+The [red-team disposition](redteam-disposition.md) records the evidence and corrections.
+LTX Desktop can run the selected LTX family locally on the target M5 through MPS
+streaming. Treat Desktop as the provisional private generation/editor UI and this repository as a
+comparison, provenance, and automation layer until actual use exposes a missing need.
 
-**Change:** a resource governor owns the one heavy job slot, checks free RAM/disk,
-launches generation in a disposable worker process, and confirms process exit before
-the next engine starts. The Gemma encoder must be offloaded before denoising. Begin
-at 512p/short duration, then spatially upscale accepted takes.
+## Public showcase boundary
 
-### 2. “Local LLM” conflicts with a cloud-only director
+The portfolio deployment is a separate, static read model—not the local execution
+application. An explicit, versioned allowlist selects immutable completed outputs;
+generic packaging verifies their source hashes, copies bytes without transcoding, and
+emits privacy-filtered provenance for a static browser. The hosted interface never
+claims to run LTX, approve creative work, or provide a production database.
 
-The proposal names Claude/OpenAI as the brain but the product promises local LLMs.
+Cloudflare Pages is the chosen initial delivery target because all selected files are
+below its 25 MiB static-asset limit. The measured package does not justify R2, Workers,
+Pages Functions, D1, or a browser-to-localhost bridge. Original runs and raw sidecars
+remain ignored local evidence. See [publication.md](publication.md).
 
-**Change:** define a `DirectorProvider` contract. Support a high-quality cloud model
-for the first PoC and an OpenAI-compatible local endpoint for offline mode. Store the
-provider/model/prompt version with every plan. Compare both against a small golden
-script suite before claiming interchangeability.
+## Build the smallest truthful vertical slice
 
-### 3. A 5-second JSON array is too shallow
+Before React, FastAPI, SQLite, or a general scheduler, build only:
 
-A flat array cannot represent character identity, asset ownership, time, geography,
-screen direction, approved takes, dependencies, or a change to one upstream board.
+```text
+script -> typed shot plan -> approved anchor -> one video adapter
+       -> validated take -> normalized FFmpeg output
+                |
+                +-> append-only JSONL events + hash-named artifacts
+```
 
-**Change:** persist `Project -> Bibles -> Scenes -> Shots -> Takes -> Artifacts`, with
-immutable artifact lineage and explicit continuity-in/continuity-out state. Shot
-duration is a bounded editorial choice, not always exactly five seconds.
+One CLI command should exercise one hand-pinned, manually proven engine configuration.
+The project folder is the recovery boundary. Each event records input hashes, engine
+and model revision, seed/parameters, status, artifact hash, and error. Re-running
+skips a valid matching artifact and never silently reuses an output after an input
+changes.
 
-### 4. Continuity cannot come from the last frame alone
+The typed [local production workflow](production-workflow.md) now separates creative
+LLM output from deterministic M5 scheduling. `ProductionManifest` fixes the single heavy
+job slot, disk offload, legal LTX frame geometry, conventional artifact paths, prompt
+compilation mode, and guarded shot states. An agent skill may drive this contract later,
+but Markdown instructions are never the durable source of production truth.
 
-Last-frame chaining accumulates drift, freezes poor composition, and makes every
-later shot depend on every earlier failure. Hard cuts also rarely want the preceding
-clip's last frame as their next composition.
+This vertical slice answers the real unknowns: whether the model runs, whether two
+shots preserve identity, how long it takes, and whether the result is worth watching.
 
-**Change:** use a continuity toolbox selected per cut:
+Every new slice also obeys [product and engineering governance](governance.md): it must
+be reusable in the intended application or produce decision-quality evidence. Current
+PoC media are immutable fixtures; film-specific repairs never enter generic code.
 
-- Canonical character/location reference packs and locked style/seed metadata.
-- Approved anchor boards per shot; first/last keyframe conditioning where supported.
-- Last-frame or overlap extension only for genuinely continuous camera/action shots.
-- Pose/depth/edge controls and reference video for blocking when available.
-- Continuity checks on identity, wardrobe, props, screen direction, and audio.
+Every native render attempt writes an atomic, versioned `.run.json` sidecar before the
+heavy process starts and updates that same attempt record on success or failure. The
+private record owns exact direction/configuration, engine precision and quantization
+state, revisions, input/output hashes, elapsed time, media probe, and human review.
+Those sidecars remain local evidence; the public recorded showcase receives only the
+explicitly allowlisted, privacy-filtered fields described in `publication.md`.
 
-### 5. Prompt rules contain a useful tension
+## Domain model
 
-The proposed motion prompt must cover scene/character/audio yet must not re-describe
-character/environment in I2V. Repetition fights the conditioning image; omitting who
-moves makes action ambiguous.
+A flat list of five-second prompts is insufficient. Preserve these concepts in typed
+JSON now, without prematurely normalizing them into database tables:
 
-**Change:** the static prompt owns appearance and setting. The motion prompt may name
-the actor and describe changing state, action, camera, timing, dialogue, and sound,
-but must not repeat stable visual attributes. Store dialogue and sound as structured
-cues, then compile an engine-specific render prompt at execution time.
+```text
+Project
+  Bibles (character, wardrobe, location, prop, style, voice)
+  Scenes
+    Shots
+      continuity-in / continuity-out
+      static image intent
+      motion/camera intent
+      structured dialogue and sound cues
+      references and approvals
+      Takes
+        immutable input/provenance record
+        generated Artifacts
+```
 
-### 6. ComfyUI JSON injection is brittle
+Shot duration is an editorial choice constrained by the selected engine. Stable
+appearance and setting belong to the image prompt/reference pack. For I2V, motion
+text may name the actor and describe changing state, action, timing, camera, dialogue,
+and sound, but must not repeat stable visual attributes.
 
-Node IDs and widget positions change; a successful queue event does not itself prove
-the intended file exists or is valid. Third-party nodes also add supply-chain and
-upgrade risk.
+## Continuity strategy
 
-**Change:** version known-good API workflows and separate semantic binding manifests.
-Pin ComfyUI/custom-node commits, validate `/object_info`, upload assets explicitly,
-listen on `/ws`, reconcile with `/history/{prompt_id}`, then probe output media.
-Keep a native LTX adapter so the project is not stranded by a ComfyUI regression.
+Do not chain every last frame. Select the least fragile control per edit:
 
-### 7. Concatenation is not post-production
+- Canonical character/location reference packs and locked style metadata.
+- Approved anchor boards for every hard cut.
+- First/last keyframes or short overlap extension only for genuinely continuous action.
+- Pose, depth, edge, or reference-video controls where the chosen engine supports them.
+- A scored checklist for face/body identity, wardrobe, props, location, screen
+  direction, lighting intent, and voice.
 
-Stream-copy fails when clips differ in codec, dimensions, FPS, timebase, pixel format,
-or audio layout. Generated audio will produce clicks, level jumps, room-tone changes,
-and dialogue overlap at edits.
+Stage 0.5 measures this before application infrastructure. Automated continuity
+scoring can later assist reviewers; it does not replace a human creative gate.
 
-**Change:** validate every take with `ffprobe`; normalize selected takes to a mezzanine
-profile; assemble video and audio on an explicit timeline; add room tone, fades,
-loudness normalization, subtitles, and final QC. Keep simple concat only for the PoC.
+The first measured last-frame chain confirms that boundary conditioning is effective
+and that defects propagate through dependencies. Therefore a chained take depends on an
+explicitly approved boundary-frame artifact, not merely an approved parent video. A
+retake invalidates downstream chains by hash; it must never silently retain children
+conditioned from an obsolete or rejected expression.
 
-### 8. Automation needs recovery and observability
+The local adapter now models uploaded stills as typed timeline references with a stable,
+editable ID, immutable file/hash, strength, and global percentage. It deterministically
+maps the percentage onto a clip and exact pixel-frame index, including first/last-frame
+interpolation and interior keyframes. At an exact multi-clip boundary, the reference is
+applied to the outgoing final frame; the decoded frame then becomes the next clip's
+frame-zero continuation. This avoids two competing conditionings on one frame. IDs such
+as `@start-frame` are application metadata compiled into prompt timing; visual control
+comes from native repeated `--image PATH FRAME_IDX STRENGTH` conditioning, not from an
+assumption that the model intrinsically resolves arbitrary IDs.
 
-A loop has no durable resume point, cancellation model, stale-output protection, or
-way to explain which prompt/model generated a file.
+## Engine adapter contract
 
-**Change:** SQLite stores jobs and artifact lineage. Each stage is idempotent and
-content-addressed. Events stream to the UI. Failed work retries only when safe; users
-can resume from the last valid artifact.
+The domain layer supplies semantic inputs and expects immutable artifact/provenance
+outputs. An adapter owns engine-specific prompt compilation, geometry constraints,
+model hashes, progress, cancellation, teardown, and output discovery.
 
-### 9. Reference media introduces product and safety requirements
+For any adapter to be considered operational it must pass:
 
-Voice and likeness inputs require consent/provenance; arbitrary uploads need type,
-duration, metadata, and path validation. Lyrics/music can create rights issues.
+1. A capability/preflight check against the exact installed runtime revision.
+2. A live queue-to-file integration test using a pinned configuration.
+3. Timeout, cancellation, process-exit, and restart/reconciliation tests.
+4. Media validation with `ffprobe`, not merely a successful queue event.
+5. Memory return-to-baseline measurement on the target Mac.
 
-**Change:** asset ingestion records source, ownership/consent, checksum, media probe,
-usage scope, and derived proxies. Secrets stay in the OS keychain; project exports
-exclude them. Add visible provenance and a deletion path.
+If ComfyUI is used, bind semantic fields through a versioned manifest rather than
+hard-coded widget positions; pin ComfyUI/custom-node commits; validate `/object_info`;
+upload assets explicitly; reconcile WebSocket events with `/history/{prompt_id}`;
+and accept only loopback URLs by default. Because a separately launched ComfyUI owns
+its models, the app cannot promise unload semantics unless it also supervises that
+process or successfully calls and verifies its interrupt/free controls.
 
-## Proposed component boundaries
+## Assembly is a timeline, not concat
+
+The existing concatenator is adequate only for homogeneous PoC clips. Production
+assembly must probe and normalize codec, dimensions, frame rate, timebase, pixel
+format, and audio layout before placing media on an explicit timeline. Dialogue,
+ambience, music, room tone, fades, captions, and loudness are separate tracks. The
+final file and each delivered upscale receive their own QC and approval.
+
+The first production-shaped timeline slice now exists as `EditorialProject`,
+`CutManifest`, and `AssemblyRecord`. It keeps takes immutable, separates technical from
+creative approval, requires an explicit edit for conditionally approved takes, verifies
+take/boundary hashes, applies reversible second- or frame-addressed trims/fades and
+declared cut/dissolve transitions, normalizes media, and snapshots the exact manifests
+beside every delivery. Exact-boundary joins must retain the declared source frame
+inclusively and either remove the child's duplicate first frame or declare an overlap;
+the resolver rejects off-by-one joins. A dependency digest distinguishes media staleness
+from review-only metadata changes. See [editorial workflow](editorial-workflow.md).
+
+## Privacy, rights, and trust boundaries
+
+The legacy OpenAI bootstrap provider sends the script to a third party. It is excluded
+from the MVP and must stay clearly labelled if retained for historical CLI compatibility.
+The MVP UI exposes only evaluated local adapters and must pass a network-disabled test
+before it claims private/offline operation.
+
+Every uploaded voice, likeness, image, video, sound effect, and music asset records
+source, ownership/consent, allowed use, checksum, and deletion state. Generated media
+records model/workflow licence and provenance. Secrets stay outside project exports
+and move from `.env` to the OS keychain before multi-user distribution.
+
+External render and model servers are untrusted unless explicitly configured. Local
+engines bind to loopback, inputs and returned paths are validated, downloads are
+streamed with limits, and arbitrary custom-node code is pinned and reviewed.
+
+## Approved single-shot MVP architecture
+
+The user has explicitly authorized the narrower single-shot MVP. Its immutable take
+history, range retakes, approvals, dependency invalidation, restart recovery, and
+queryable history now justify:
 
 ```text
 React storyboard UI
         |
 FastAPI project API + event stream
         |
-Project service --- SQLite metadata / content-addressed media store
+Project service --- SQLite metadata / immutable artifact store
         |
-Durable job state machine --- resource governor --- disposable worker process
+Durable state machine --- one-slot resource governor --- supervised workers
         |
-  +-----+-------------+--------------+----------------+
-  | Director adapter  | Image adapter| Video adapter  | Audio adapter
-  | cloud/local LLM   | Comfy/native | LTX native or  | LTX/external
-  |                   |              | ComfyUI         |
-  +-------------------+--------------+-----------------+
-        |
-Timeline assembler (ffprobe + FFmpeg) -> QC -> export manifest
+Director | Image | Video | Audio adapters -> timeline assembler -> QC/export
 ```
 
-For a distributable full app, React + TypeScript with FastAPI is a good boundary.
-Use a normal browser UI during PoC/MVP; add Tauri or Electron only when packaging,
-native file dialogs, keychain access, updates, and process lifecycle justify it.
+SQLite is adopted from observed JSONL query/recovery needs and the approved revision
+graph, not an imagined enterprise schema. A normal browser UI comes before a desktop
+shell. Tauri/Electron, signing, updates, telemetry, LoRA training, multiple scenes, and
+cloud burst remain out of scope and require separate evidence and user demand.
 
-## Canonical storage model
+Scene extension is assembly lineage, not in-place concatenation: the exact retained final
+frame and continuity-out state of a selected assembly seed appended clip slots in a new
+branch. Parent selection/edit changes stale descendants by dependency digest; recursive
+extensions never rewrite their ancestors.
 
-- SQLite: projects, bibles, scenes, shots, takes, jobs, approvals, parameters.
-- Filesystem: original assets and immutable generated artifacts by checksum.
-- JSON export: portable project manifest with relative paths and schema version.
-- Never store model weights or generated media in Git.
-
-## LTX-2.5 decision on the target Mac
-
-LTX-2.5 Fast Distilled INT8-ConvRot remains the fixed video engine. The quantized
-files are ComfyUI-only; the native LTX Python pipeline expects BF16 and is not the
-primary path for this hardware profile. The first spike must benchmark 3-5 second
-512p video-only and audio-video cases while recording peak RAM, swap, wall time, and
-output validity. A 720p/1080p promise is accepted-output/upscale territory until
-measurements prove native generation viable.
+The normative product and implementation contracts are the
+[MVP specification](mvp-single-shot-spec.md),
+[technical design](mvp-single-shot-technical-design.md), and
+[implementation plan](mvp-single-shot-implementation-plan.md). The
+[MVP red-team disposition](mvp-single-shot-redteam-disposition.md) records the independent
+product, M5 architecture, and integrity challenges and their resolution. Re-evaluate model/runtime
+choices at every milestone because this ecosystem changes faster than the product layer.

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Download the official ComfyUI LTX-2.5 distilled INT8-ConvRot pack."""
+"""Download the legacy ComfyUI LTX-2.5 INT8 pack on supported platforms.
+
+The selected checkpoints require an INT8 matrix operation that stock Apple MPS does
+not implement. This utility deliberately blocks macOS before authentication or disk
+mutation; see docs/m5-32gb-profile.md.
+"""
 
 from __future__ import annotations
 
@@ -19,6 +24,17 @@ FILES = [
     "vae/ltx-2.5-audio-vae-bf16.safetensors",
     "latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors",
 ]
+MPS_REJECTION = (
+    "Blocked: the ComfyUI INT8-ConvRot checkpoints require aten::_int_mm, which "
+    "PyTorch MPS does not implement. Do not download this profile for the M5 Mac. "
+    "See docs/m5-32gb-profile.md for the native BF16 disk-streaming feasibility path."
+)
+
+
+def platform_is_supported(platform: str = sys.platform) -> bool:
+    """Return false for the known-incompatible stock Apple MPS route."""
+
+    return platform != "darwin"
 
 
 def run(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -36,6 +52,10 @@ def main() -> int:
     parser.add_argument("--force-low-disk", action="store_true")
     args = parser.parse_args()
 
+    if not platform_is_supported():
+        print(MPS_REJECTION, file=sys.stderr)
+        return 2
+
     hf = shutil.which("hf")
     if not hf:
         print("Blocked: install huggingface_hub so the `hf` command is available.", file=sys.stderr)
@@ -49,9 +69,9 @@ def main() -> int:
         )
         return 2
 
-    target_parent = args.target.resolve().parent
-    target_parent.mkdir(parents=True, exist_ok=True)
-    free_gib = shutil.disk_usage(target_parent).free / 1024**3
+    target = args.target.resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    free_gib = shutil.disk_usage(target).free / 1024**3
     if free_gib < REQUIRED_FREE_GIB and not args.force_low_disk:
         print(
             f"Blocked: {free_gib:.1f} GiB free; require {REQUIRED_FREE_GIB} GiB of headroom. "

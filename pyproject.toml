@@ -7,6 +7,7 @@ name = "director-demo"
 version = "0.1.0"
 description = "Local-first AI film direction and sequential media generation"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
   "ffmpeg-python>=0.2.0,<1",
@@ -29,12 +30,14 @@ dev = [
 
 [project.scripts]
 director-demo = "director_demo.cli:app"
+director-demo-app = "director_demo.local_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 
 [tool.ruff]

@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0",
+  "package_id": "director-demo-showcase-v1",
+  "mode": "recorded_showcase",
+  "notice": "Generated locally. This hosted showcase plays recorded outputs and does not run the model.",
+  "privacy_notice": "The recorded starting frame and generation prompt are published for each selected clip. Run records, timestamps, paths, and unselected inputs remain private.",
+  "assets": [
+    {
+      "id": "rainy-tram",
+      "title": "Rainy tram",
+      "selection_reason": "Completed reference-conditioned scene showing camera and environmental motion.",
+      "prompt": "A locked-off cinematic camera observes the rain-soaked tram platform at night. Heavy rain continues naturally throughout. The tram passes slowly from left to right along the tracks,  wet metal, reflected headlights, and subtle spray. As it draws level with the figure, the person slowly turns only their head to follow it. A powerful lightning strike illuminates the sky and creates a very brief cold-white flash across the entire frame, momentarily revealing the person’s face in sharper detail—Preserve the person, backpack, tram, shelter, composition, perspective, and photorealistic style. Natural motion, realistic rain physics, subtle cinematic motion blur, moody suspense.No camera movement, cuts, added people, morphing, warped tram geometry, exaggerated head rotation, text, logos, or prolonged overexposure.",
+      "published": {
+        "url": "/showcase/media/rainy-tram-098647032549.mp4",
+        "sha256": "098647032549055c710bd24f431983d21a0fa686fe0d76049ab6d2d618b90f92",
+        "bytes": 3853444
+      },
+      "starting_frame": {
+        "url": "/showcase/starting-frames/rainy-tram-starting-frame-0428a33e95ad.png",
+        "sha256": "0428a33e95ad3f96a196a74eb7ab95210785de3fb66e7dc6568bd35b7535e370",
+        "bytes": 9317583
+      },
+      "media": {
+        "width": 1024,
+        "video_codec": "h264",
+        "frame_rate": 24,
+        "height": 576,
+        "duration_seconds": 5.041667,
+        "audio_codec": "aac",
+        "resolution_provenance": "native"
+      },
+      "settings": {
+        "width": 1024,
+        "frame_rate": 24,
+        "height": 576,
+        "offload": "disk",
+        "frames_per_clip": 121,
+        "join": "exact shared-frame hard cut",
+        "max_batch_size": 1
+      },
+      "engine": {
+        "precision": "bf16",
+        "quantization": "none",
+        "name": "LTX-2.5 Fast distilled",
+        "pipeline": "ltx_pipelines.distilled"
+      },
+      "lineage": {
+        "parent_asset_id": null
+      },
+      "review": {
+        "technical": "pass",
+        "creative": "pending_human_review",
+        "delivery": "pending"
+      },
+      "rights": {
+        "publication_basis": "Owner confirmation recorded 2026-09-17 for the selected video, starting frame, and accompanying public prompt.",
+        "status": "owner_confirmed",
+        "reuse_terms": "Publication only; all other media reuse rights reserved."
+      },
+      "limitations": [
+        "Recorded result; this hosted showcase does not run the generation model."
+      ]
+    },
+    {
+      "id": "clockwork-fox",
+      "title": "Clockwork fox",
+      "selection_reason": "Completed base scene with a separately recorded continuation.",
+      "prompt": "The humanoid fox turns his head and shoulders toward the open book, lowering his gaze as his eyes scan naturally across the pages. His ears make small, attentive movements while he holds the book steadily. Around him, pendulums swing, exposed gears rotate, and warm lamplight glints across the intricate brass mechanisms filling the majestic moonlit loft library.\nSuddenly, every analogue timepiece reaches midnight. Pendulum clocks, carriage clocks, pocket watches, escapements, and the enormous clock window erupt into a layered mechanical clatter: hammer-struck brass bells, winding gears, deep chimes, rattling mechanisms, and spring-driven ringing—no electronic sounds. The fox is sharply startled; his ears snap upright, his eyes widen, and his shoulders jerk as the book dips slightly without falling.\nPreserve the fox’s appearance, costume, book, lighting, and surroundings. Use natural movement, realistic anatomy, cinematic depth of field, and subtle atmospheric dust. No cuts, new characters, digital displays, morphing, extra limbs, speech, music, or electronic alarms.",
+      "published": {
+        "url": "/showcase/media/clockwork-fox-e2887503ed6b.mp4",
+        "sha256": "e2887503ed6b1982b1ab03ce756fbbe5b4c71469a75c2fe9718cee79e53d0bc9",
+        "bytes": 3192913
+      },
+      "starting_frame": {
+        "url": "/showcase/starting-frames/clockwork-fox-starting-frame-ef01586c07c1.png",
+        "sha256": "ef01586c07c1f03199a4131544901d05d275d421cb3b90983a803922d5cc7612",
+        "bytes": 9940380
+      },
+      "media": {
+        "width": 1024,
+        "video_codec": "h264",
+        "frame_rate": 24,
+        "height": 576,
+        "duration_seconds": 5.041667,
+        "audio_codec": "aac",
+        "resolution_provenance": "native"
+      },
+      "settings": {
+        "width": 1024,
+        "frame_rate": 24,
+        "height": 576,
+        "offload": "disk",
+        "frames_per_clip": 121,
+        "join": "exact shared-frame hard cut",
+        "max_batch_size": 1
+      },
+      "engine": {
+        "precision": "bf16",
+        "quantization": "none",
+        "name": "LTX-2.5 Fast distilled",
+        "pipeline": "ltx_pipelines.distilled"
+      },
+      "lineage": {
+        "parent_asset_id": null
+      },
+      "review": {
+        "technical": "pass",
+        "creative": "pending_human_review",
+        "delivery": "pending"
+      },
+      "rights": {
+        "publication_basis": "Owner confirmation recorded 2026-09-17 for the selected video, starting frame, and accompanying public prompt.",
+        "status": "owner_confirmed",
+        "reuse_terms": "Publication only; all other media reuse rights reserved."
+      },
+      "limitations": [
+        "Recorded result; this hosted showcase does not run the generation model."
+      ]
+    },
+    {
+      "id": "airship-valley",
+      "title": "Airship over the valley",
+      "selection_reason": "Completed scene with a different reference, subject and motion direction.",
+      "prompt": "The camera pulls back slowly while tracking slowly right, revealing more mountainous city without losing the airship as the focal subject. The ship travels left to right, steadily descending beneath drifting clouds that move gently across distant peaks. Small flames appear along the gondola and lower envelope, then spread rapidly through the rigging and hull until fire engulfs nearly the entire craft. Thick smoke trails behind and glowing embers fall into the valley. Maintaining forward momentum, the airship crashes into the ornate domed structure on the right. The impact crushes the pavilion, buckles columns, shatters the roof, and sends masonry and brass fragments collapsing inward beneath burning wreckage. Use convincing physics, layered smoke, heat distortion, cascading debris, and atmospheric depth. Preserve the vintage engraved painterly style, sepia palette, mountain layout, airship design, and architectural detail. No unrealistic explosions.",
+      "published": {
+        "url": "/showcase/media/airship-valley-bbe536222e4f.mp4",
+        "sha256": "bbe536222e4f3611b038a7bd3eb4826aa9c8a0b6b1096e022bd1fb615a64c876",
+        "bytes": 5464671
+      },
+      "starting_frame": {
+        "url": "/showcase/starting-frames/airship-valley-starting-frame-d9bacee71d70.png",
+        "sha256": "d9bacee71d7049d35f44dc0e268e4a72bd0721157db65cad6a563caaf4036cc4",
+        "bytes": 12271352
+      },
+      "media": {
+        "width": 1024,
+        "video_codec": "h264",
+        "frame_rate": 24,
+        "height": 576,
+        "duration_seconds": 5.041667,
+        "audio_codec": "aac",
+        "resolution_provenance": "native"
+      },
+      "settings": {
+        "width": 1024,
+        "frame_rate": 24,
+        "height": 576,
+        "offload": "disk",
+        "frames_per_clip": 121,
+        "join": "exact shared-frame hard cut",
+        "max_batch_size": 1
+      },
+      "engine": {
+        "precision": "bf16",
+        "quantization": "none",
+        "name": "LTX-2.5 Fast distilled",
+        "pipeline": "ltx_pipelines.distilled"
+      },
+      "lineage": {
+        "parent_asset_id": null
+      },
+      "review": {
+        "technical": "pass",
+        "creative": "pending_human_review",
+        "delivery": "pending"
+      },
+      "rights": {
+        "publication_basis": "Owner confirmation recorded 2026-09-17 for the selected video, starting frame, and accompanying public prompt.",
+        "status": "owner_confirmed",
+        "reuse_terms": "Publication only; all other media reuse rights reserved."
+      },
+      "limitations": [
+        "Recorded result; this hosted showcase does not run the generation model."
+      ]
+    },
+    {
+      "id": "clockwork-fox-continuation",
+      "title": "Clockwork fox — continued",
+      "selection_reason": "Completed parent-plus-extension assembly demonstrating versioned continuation lineage.",
+      "prompt": "The fox stutters in fear as he says \"no..no..they've.., they've found me!\" before the windows behind him smash inwards and masked creatures of different shapes begin climbing in",
+      "published": {
+        "url": "/showcase/media/clockwork-fox-continuation-7209368a9e2f.mp4",
+        "sha256": "7209368a9e2fda8cb79b8df21bf0d7f595cd609ddbea59184fbc43bbd427a882",
+        "bytes": 5347514
+      },
+      "starting_frame": {
+        "url": "/showcase/starting-frames/clockwork-fox-continuation-starting-frame-4561f11d026b.png",
+        "sha256": "4561f11d026b08dead77de91ebfe17800c00eeb8b3297990c3cb233954e4cbcd",
+        "bytes": 797885
+      },
+      "media": {
+        "width": 1024,
+        "video_codec": "h264",
+        "frame_rate": 24,
+        "height": 576,
+        "duration_seconds": 10.041667,
+        "audio_codec": "aac",
+        "resolution_provenance": "native"
+      },
+      "settings": {
+        "width": 1024,
+        "frame_rate": 24,
+        "height": 576,
+        "offload": "disk",
+        "frames_per_clip": 121,
+        "join": "exact shared-frame hard cut",
+        "max_batch_size": 1
+      },
+      "engine": {
+        "precision": "bf16",
+        "quantization": "none",
+        "name": "LTX-2.5 Fast distilled",
+        "pipeline": "ltx_pipelines.distilled"
+      },
+      "lineage": {
+        "parent_asset_id": "clockwork-fox",
+        "parent_asset_sha256": "e2887503ed6b1982b1ab03ce756fbbe5b4c71469a75c2fe9718cee79e53d0bc9"
+      },
+      "review": {
+        "technical": "pass",
+        "creative": "pending_human_review",
+        "delivery": "pending"
+      },
+      "rights": {
+        "publication_basis": "Owner confirmation recorded 2026-09-17 for the selected video, starting frame, and accompanying public prompt.",
+        "status": "owner_confirmed",
+        "reuse_terms": "Publication only; all other media reuse rights reserved."
+      },
+      "limitations": [
+        "The first five seconds repeat the parent assembly.",
+        "Recorded result; this hosted showcase does not run the generation model."
+      ]
+    },
+    {
+      "id": "storm-escape",
+      "title": "Percy — storm escape",
+      "selection_reason": "Completed reference-conditioned scene demonstrating character action and environmental motion.",
+      "prompt": "Use the supplied concept art as the exact opening frame. Over 5 seconds, Percy's mother's golden, glittering form rapidly dissolves into windblown sparks; Percy reaches toward her in shock, then his friend urgently pulls him up as the beast charges closer through the storm. Camera pushes into a tense handheld tracking move as they turn and sprint toward camp. Preserve the painterly style, character designs, rain, lightning, and dramatic blue-gold lighting; smooth natural motion, no text or character morphing.",
+      "published": {
+        "url": "/showcase/media/storm-escape-47e5a44d5166.mp4",
+        "sha256": "47e5a44d51667812e31a23b5533e7bc12480eb887eda25daa04fdb7ee0bd53ef",
+        "bytes": 3509169
+      },
+      "starting_frame": {
+        "url": "/showcase/starting-frames/storm-escape-starting-frame-c5c586bf3226.png",
+        "sha256": "c5c586bf32263cbc911b4a7d380f21263deeed3d405cead13718bf8b0cd5e925",
+        "bytes": 2673172
+      },
+      "media": {
+        "width": 1024,
+        "video_codec": "h264",
+        "frame_rate": 24,
+        "height": 576,
+        "duration_seconds": 5.041667,
+        "audio_codec": "aac",
+        "resolution_provenance": "native"
+      },
+      "settings": {
+        "width": 1024,
+        "frame_rate": 24,
+        "height": 576,
+        "offload": "disk",
+        "frames_per_clip": 121,
+        "join": "exact shared-frame hard cut",
+        "max_batch_size": 1
+      },
+      "engine": {
+        "precision": "bf16",
+        "quantization": "none",
+        "name": "LTX-2.5 Fast distilled",
+        "pipeline": "ltx_pipelines.distilled"
+      },
+      "lineage": {
+        "parent_asset_id": null
+      },
+      "review": {
+        "technical": "pass",
+        "creative": "pending_human_review",
+        "delivery": "pending"
+      },
+      "rights": {
+        "publication_basis": "Owner confirmation recorded 2026-09-17 for the selected video, starting frame, and accompanying public prompt.",
+        "status": "owner_confirmed",
+        "reuse_terms": "Publication only; all other media reuse rights reserved."
+      },
+      "limitations": [
+        "Recorded result; this hosted showcase does not run the generation model."
+      ]
+    }
+  ]
+}

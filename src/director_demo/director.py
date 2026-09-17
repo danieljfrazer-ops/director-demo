@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Final
+from typing import Final, cast
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
-from openai.types.shared_params import ResponseFormatJSONObject
+from openai.types.shared_params import ResponseFormatJSONSchema
 
 from director_demo.config import Settings
 from director_demo.schemas import ShotPlan
@@ -40,6 +40,8 @@ Prompt rules:
 Planning rules:
 - Treat references as authoritative. Do not infer rights or identity from them.
 - Break action at natural edit points. Avoid generating an entire scene as one clip.
+- For the M5/32 GB local profile, every shot must be 1-5 seconds. Split longer
+  dramatic beats at a motivated edit point; never request a shot longer than 5 seconds.
 - Prefer motivated cuts. State the outgoing transition; default to a hard cut.
 - If source details are missing, choose the least surprising cinematic option and
   keep that choice consistent throughout the plan.
@@ -84,11 +86,20 @@ def create_shot_plan(script: str, settings: Settings | None = None) -> ShotPlan:
         return message.parsed
 
     if config.director_llm_provider == "compatible":
-        json_response_format: ResponseFormatJSONObject = {"type": "json_object"}
+        json_response_format: ResponseFormatJSONSchema = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "director_shot_plan",
+                "description": "A production-ready, continuity-aware film shot plan.",
+                "schema": cast(dict[str, object], ShotPlan.model_json_schema()),
+                "strict": True,
+            },
+        }
         local_completion = client.chat.completions.create(
             model=config.director_llm_model,
             messages=messages,
             response_format=json_response_format,
+            temperature=0,
         )
         content = local_completion.choices[0].message.content
         if not content:

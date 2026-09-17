@@ -1,62 +1,127 @@
-# Fixed runtime profile: M5 MacBook Air, 32 GB
+# Provisional runtime profile: M5 MacBook Air, 32 GB
 
-This hardware is a product constraint, not an optional deployment target. Features
-must degrade resolution, duration, or throughput before they exceed its memory.
+This machine is the product constraint. Resolution, duration, concurrency, and
+backend choice must bend before the memory limit does.
 
-## Selected LTX-2.5 files
+## Confirmed blocker: stock ComfyUI INT8
 
-The correct profile is both **step-distilled** and **weight-quantized**:
+The previously selected distilled INT8-ConvRot transformer and encoder are not a
+viable stock Apple MPS route. On this exact Mac, PyTorch 2.13.0 exposes MPS but
+`torch._int_mm` fails with `aten::_int_mm not currently implemented for MPS`.
+Downloading or installing more of that pack cannot solve the missing kernel.
 
-| Component | Official file | Approx. disk size |
-|---|---|---:|
-| Video/audio transformer | `ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors` | 20.03 GiB |
-| Gemma 4 encoder + projection | `gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors` | 14.32 GiB |
-| Diffusion video VAE | `ltx-2.5-video-vae-bf16.safetensors` | 1.37 GiB |
-| Audio VAE | `ltx-2.5-audio-vae-bf16.safetensors` | 0.34 GiB |
-| 2x latent spatial upscaler | `ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors` | 0.93 GiB |
+The repository downloader now refuses this profile on macOS. The incompatible INT8
+transformer and encoder partials were purged on 15 August 2026. Completed components
+and the BF16 VAE partial that remain reusable with strict LTX-2.5 were preserved.
 
-Total: approximately **37 GiB**, before ComfyUI, Python, generated media, and caches.
-Keep at least 45 GiB free for installation and substantially more for project media.
+## Candidate video runtimes
 
-Do not use either `*-bf16` transformer or encoder. Distillation alone reduces steps;
-the BF16 distilled transformer is the same approximately 39.13 GiB as the BF16 dev
-transformer. Do not use the NVFP4 transformer: it targets NVIDIA FP4 execution and is
-not the Apple MPS profile. The INT8-ConvRot files are explicitly ComfyUI-only.
+1. **Primary local spike — official LTX-2 Python pipeline.** Use the strict LTX-2.5
+   distilled BF16 component set with `--offload disk`. Current official source has
+   Apple Silicon device selection, per-block disk streaming, and `mps-sdpa>=0.2.0`
+   as a platform dependency. That package calls Apple's fused MPSGraph attention
+   through a prebuilt zero-copy bridge. This is a credible route, not a benchmark on
+   this 32 GB machine.
+2. **MVP fallback — smaller local scope.** The approved first MVP is local-only. If the
+   primary local runtime fails a required gate, reduce duration, resolution, audio
+   scope, or model/profile ambition and record the product limitation. Do not transmit
+   project data to a hosted renderer as an MVP fallback.
+3. **Rejected on the current stack — ComfyUI INT8-ConvRot video.** Reconsider only
+   after a real MPS INT8 kernel lands and the exact probe passes.
 
-The optional `gemma4_e2b_it_bf16.safetensors` prompt enhancer is omitted. The app's
-director already produces detailed prompts, saving another approximately 9.57 GiB of
-disk and avoiding another large model lifecycle.
+ComfyUI remains eligible for lighter image/look-development workflows after its own
+measured memory test. Image and video workers must never overlap.
+
+LTX Desktop is supporting evidence only. Its current local Mac backend uses LTX-2.3,
+not the required LTX-2.5 weights. Do not use its quality or timing as an LTX-2.5 result.
+
+## Feasibility geometries
+
+The official distilled pipeline is two-stage, so output width and height must be
+divisible by 64; frame counts must be `8n + 1`. Use exact values rather than labels
+such as “512p, three seconds”:
+
+| Rung | Geometry at 24 fps | Purpose |
+|---|---|---|
+| A | 448 x 256, 49 frames (~2.04 s) | Prove a decoded I2V result and bounded memory. |
+| B | 448 x 256, 73 frames (~3.04 s) | Measure duration scaling. |
+| C | 448 x 256, 121 frames (~5.04 s) | Prove the nominal five-second shot. |
+| D | 1024 x 576, 121 frames (~5.04 s) | Practical 16:9 local master candidate. |
+
+Measured on 15 August 2026, the 1024 x 576 / 49-frame R1 control completed in 745.50
+seconds with 14.49 GB peak child RSS, zero swap delta, and a valid synchronized output.
+It was only 19.6% slower than the preceding small-raster run under disk streaming.
+This proves the two-second high-resolution rung. The subsequent 1024 x 576 / 121-frame
+R2 dialogue run completed in 1,092.06 seconds with 14.80 GB peak child RSS, zero swap
+delta, valid synchronized media, and no thermal warning. R2 passes numeric safety and
+usability; normal-speed user review confirms significantly less eye and mouth distortion
+than the low-resolution baseline. It is the provisional local default, not a claim that
+all dialogue faces or camera angles are artifact-free.
+
+The stock strict LTX-2.5 distilled CLI generates synchronized audio and video together;
+do not describe its first run as video-only. Score video validity first and record
+audio validity separately. Its 2x latent stage is not a cheap post-process: the graph
+re-runs the 22B transformer. The high-resolution result is the take requiring approval.
+
+The provisional PoC generation default is now 1024 x 576, 121 frames, 24 fps, BF16
+distilled weights, disk offload, and batch size one. It remains user-configurable and is
+accepted provisionally after playback review. The delivery profile is
+1280 x 720 at 24 fps, upscaled from an approved 1024 x 576 take. A 1920 x 1080 file may be offered later for playback compatibility,
+but it is upscaled delivery—not native 1080p detail. Generate ten-second scenes as two
+five-second shots or a controlled extension rather than a 241-frame first-pass render.
+
+On 17 August 2026, three real 1024×576 / 49-frame stitched-scene extension runs completed
+sequentially in 769–884 seconds. Peak child RSS was 13.77–14.59 GB, absolute swap deltas
+ranged from 16.78 MB to 473.04 MB, no thermal warning was recorded, and every output was
+conformant H.264/AAC media. First-level and recursive assemblies retained exactly one
+shared boundary frame. This confirms the two-second rung as the safe extension and
+feasibility-test default; it does not replace the five-second quality default for ordinary
+shots. Detailed measurements and limitations remain in the private experiment archive.
 
 ## Runtime contract
 
-1. Only one heavy generation job may execute.
-2. Produce text embeddings, then unload/offload Gemma before loading/denoising LTX.
-3. Unload the transformer before high-memory VAE decode or the next image model.
-4. Start feasibility tests at 512p, 24 fps, and 3 seconds. Increase one dimension at
-   a time. Generate low and apply the included 2x latent upscaler for accepted takes.
-5. Video-only is the first gate. Synchronized audio is a separate gate because MPS
-   audio-VAE paths have historically had different failure modes.
-6. Record free RAM, peak resident memory, swap, wall time, output resolution/FPS,
-   and thermal throttling for every benchmark.
-7. If memory pressure becomes critical, cancel cleanly; do not let macOS enter an
-   unbounded swap-thrash state.
+1. Run one heavy worker at a time; close avoidable memory-heavy applications during
+   measurement.
+2. Record macOS version, PyTorch/runtime revision, model hashes, geometry, steps,
+   attention backend, resident/compressed memory, peak swap, wall time, free disk,
+   thermal state, and output validity.
+3. The process that owns the model must also own cancellation and teardown. Process
+   exit, not Python garbage collection, is the reliable unload boundary.
+4. Require at least 100 GiB free before setup: the official component pack is roughly
+   66 GiB, with additional environment, cache, logs, and output headroom. Disk offload
+   makes storage performance part of inference performance; prefer internal storage
+   or a fast APFS Thunderbolt/USB4 NVMe volume.
+5. Do not promise 720p delivery until rung D and its upscale pass QC. Do not promise
+   native 720p or 1080p on this machine without a separate measured result.
 
-## ComfyUI baseline
+After installation, runtime preflight uses a configurable absolute free-space reserve
+(`LTX_MINIMUM_FREE_GIB`, default 20 GiB), not a percentage of total volume capacity.
+The measured sequential pipeline streams already-installed weights and produces small
+media/provenance files; clip count increases elapsed time and output size but not the
+number of simultaneously resident models. The former 15%-of-volume rule incorrectly
+blocked a healthy 68.6 GiB-free system solely because its 460 GiB volume implied a
+69.1 GiB threshold. Installation still requires the larger setup headroom above.
 
-- Use current ComfyUI with its native LTX-2.5 T2V/I2V/FLF2V templates.
-- Use the standard `UNETLoader` with `weight_dtype=default`; quantization metadata is
-  carried by the checkpoint.
-- Do not use `--highvram` or `--gpu-only`.
-- Test ComfyUI defaults first. Add aggressive offload settings only when telemetry
-  demonstrates a need; flags change as DynamicVRAM evolves.
-- Pin the exact ComfyUI release and exported API workflow after the first successful
-  M5 run.
+## Pass, pivot, and stop gates
 
-## Acceptance ladder
+- **Safety pass:** no macOS out-of-memory termination; peak swap at or below 8 GiB;
+  memory returns to within 2 GiB of the pre-run baseline after worker exit.
+- **Usability pass:** rung C completes in 30 minutes or less on AC power and produces
+  a valid playable clip; rung D is measured separately before becoming the film
+  profile. Record subsequent warm-run variation and thermal slowdown.
+- **Quality pass:** the clip has no catastrophic identity, anatomy, motion, or decode
+  failure when scored against the written shot intent.
+- **Pivot:** if rung C cannot meet all three gates within ten focused working days,
+  stop optimizing this local runtime path and rescope the MVP to a smaller local
+  generation profile or a different local runtime. A hosted render adapter is a future
+  product decision only, not the approved MVP fallback.
+- **Stop immediately:** sustained swap growth, disk below the reserve, thermal or OS
+  instability, or output corruption. Preserve logs and partial outputs for diagnosis.
 
-1. 512p, 3-second I2V, video only.
-2. 512p, 5-second I2V, video only.
-3. 512p, 5-second I2V with synchronized audio.
-4. 720p-equivalent output through latent upscaling.
-5. Longer duration or higher native resolution only if the preceding measurement has
-   safe memory and thermal headroom.
+These thresholds are provisional product choices. Change them explicitly in a dated
+benchmark report rather than quietly redefining success.
+
+Use the [Stage 0B runbook](stage-0b-runbook.md) and a private score sheet. The implementation source of truth is the official
+[LTX-2 repository](https://github.com/Lightricks/LTX-2). LTX Desktop's
+[Darwin runtime policy](https://github.com/Lightricks/LTX-Desktop/blob/main/backend/runtime_config/runtime_policy.py)
+is comparative evidence for LTX-2.3 only.
